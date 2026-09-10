@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { Course, Note, Homework, Task, CalendarEvent, PDFFile, FileItem, Project, Exam, StudySession, Notification, UserSettings } from './types';
+import { Course, Note, Homework, Task, CalendarEvent, PDFFile, FileItem, Project, Exam, StudySession, Notification, UserSettings, User } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import { getCurrentUser } from './auth';
 
 interface AppState {
   courses: Course[];
@@ -20,6 +21,8 @@ interface AppState {
   selectedTopicId: string | null;
   searchOpen: boolean;
   sidebarCollapsed: boolean;
+  currentUser: User | null;
+  isAuthenticated: boolean;
 }
 
 type Action =
@@ -58,7 +61,9 @@ type Action =
   | { type: 'ADD_NOTIFICATION'; payload: Notification }
   | { type: 'MARK_NOTIFICATION_READ'; payload: string }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<UserSettings> }
-  | { type: 'LOAD_STATE'; payload: Partial<AppState> };
+  | { type: 'LOAD_STATE'; payload: Partial<AppState> }
+  | { type: 'SET_USER'; payload: User | null }
+  | { type: 'UPDATE_USER'; payload: Partial<User> };
 
 const defaultCourses: Course[] = [
   { id: '1', name: 'Matematik', color: '#3B82F6', icon: '📐', topics: [
@@ -173,6 +178,8 @@ const initialState: AppState = {
   selectedTopicId: null,
   searchOpen: false,
   sidebarCollapsed: false,
+  currentUser: null,
+  isAuthenticated: false,
 };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -213,6 +220,8 @@ function reducer(state: AppState, action: Action): AppState {
     case 'MARK_NOTIFICATION_READ': return { ...state, notifications: state.notifications.map(n => n.id === action.payload ? { ...n, isRead: true } : n) };
     case 'UPDATE_SETTINGS': return { ...state, settings: { ...state.settings, ...action.payload } };
     case 'LOAD_STATE': return { ...state, ...action.payload };
+    case 'SET_USER': return { ...state, currentUser: action.payload, isAuthenticated: action.payload !== null, settings: action.payload ? { ...state.settings, username: `${action.payload.firstName} ${action.payload.lastName}` } : state.settings };
+    case 'UPDATE_USER': return { ...state, currentUser: state.currentUser ? { ...state.currentUser, ...action.payload } : null };
     default: return state;
   }
 }
@@ -229,6 +238,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(saved);
         dispatch({ type: 'LOAD_STATE', payload: parsed });
       } catch (e) { /* ignore */ }
+    }
+    // Load current user
+    const user = getCurrentUser();
+    if (user) {
+      dispatch({ type: 'SET_USER', payload: user });
     }
   }, []);
 

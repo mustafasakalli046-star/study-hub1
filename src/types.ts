@@ -31,6 +31,7 @@ export interface Note {
   updatedAt: string;
   linkedNoteIds: string[];
   fileIds: string[];
+  aiSummary?: string;
 }
 
 export interface Homework {
@@ -160,4 +161,42 @@ export interface UserSettings {
   notifications: boolean;
   storageUsed: number;
   storageTotal: number;
+}
+
+// New types for auth and chat
+export type Grade = '9' | '10' | '11' | '12';
+export type Section = 'A' | 'B' | 'C' | 'D' | 'E';
+export type ClassCode = `${Grade}${Section}`;
+
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  passwordHash: string;
+  grade: Grade;
+  section: Section;
+  classCode: ClassCode;
+  avatar: string;
+  createdAt: string;
+  bio: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  classCode: ClassCode;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  content: string;
+  createdAt: string;
+  type: 'text' | 'system';
+}
+
+export interface ChatGroup {
+  classCode: ClassCode;
+  name: string;
+  memberCount: number;
+  lastMessage?: string;
+  lastMessageTime?: string;
 }
